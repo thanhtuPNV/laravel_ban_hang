@@ -30,8 +30,8 @@
           </div>
 
           <div class="form-block">
-            <label for="name">Fullname*</label>
-            <input type="text" id="name" name="name" required>
+            <label for="full_name">Fullname*</label>
+            <input type="text" id="full_name" name="full_name" required>
           </div>
 
           <div class="form-block">

@@ -1,5 +1,10 @@
 @extends('master')
 @section('content')
+@if (session('status'))
+    <div class="alert alert-success">
+        {{ session('status') }}
+    </div>
+@endif
 <div class="rev-slider">
   <div class="fullwidthbanner-container">
     <div class="fullwidthbanner">
@@ -84,7 +89,6 @@
               </div>
               @endforeach
             </div>
-            <div class="row">{{$new_product->links("pagination::bootstrap-4")}}</div>
           </div> <!-- .beta-products-list -->
 
           <div class="space50">&nbsp;</div>
@@ -127,7 +131,6 @@
               </div>
               @endforeach
             </div>
-            <div class="row">{{$promotion_product->links("pagination::bootstrap-4")}}</div>
 
           </div> <!-- .beta-products-list -->
         </div>

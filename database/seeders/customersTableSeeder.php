@@ -17,7 +17,7 @@ class customersTableSeeder extends Seeder
         $faker = Faker::create();
         for ($i = 0; $i < 100; $i++) {
             DB::table('customers')->insert([
-                'name' => $faker->name(),
+                'full_name' => $faker->name(),
                 'gender' => $faker->name(),
                 'email' => $faker->unique->email,
                 'address' => $faker->name(),
