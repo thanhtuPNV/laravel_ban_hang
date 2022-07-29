@@ -12,7 +12,8 @@ use App\Models\Customer;
 use App\Models\bill;
 use App\Models\BillDetail;
 use App\Models\Wishlist;
-
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 
 use App\Models\ProductType;
@@ -230,6 +231,17 @@ class PageController extends Controller
     }
     public function postCheckout(Request $req)
     {
+        if ($req->input('payment_method') != "VNPAY") {
+            $cart = Session::get('cart');
+            $customer = new Customer();
+            $customer->name = $req->input('name');
+            $customer->gender = $req->input('gender');
+            // vân vân.....giữ nguyên đoạn này
+            //....
+        } else { //nếu thanh toán là vnpay
+            $cart = Session::get('cart');
+            return view('vnpay.vnpay-index', compact('cart'));
+        }
         $cart = Session::get('cart');
         // dd($cart);
         $customer = new Customer;
@@ -278,4 +290,137 @@ class PageController extends Controller
 
     // }
 
+    public function createPayment(Request $request)
+    {
+        $cart = Session::get('cart');
+        $vnp_TxnRef = $request->transaction_id; //Mã giao dịch. Trong thực tế Merchant cần insert đơn hàng vào DB và gửi mã này sang VNPAY
+        $vnp_OrderInfo = $request->order_desc;
+        $vnp_Amount = str_replace(',', '', $cart->totalPrice * 100);
+        $vnp_Locale = $request->language;
+        $vnp_BankCode = $request->bank_code;
+        $vnp_IpAddr = $_SERVER['REMOTE_ADDR'];
+        $inputData = array(
+            "vnp_Version" => "2.0.0",
+            "vnp_TmnCode" => env('VNP_TMNCODE'),
+            "vnp_Amount" => $vnp_Amount,
+            "vnp_Command" => "pay",
+
+            "vnp_CreateDate" => date('YmdHis'),
+            "vnp_CurrCode" => "VND",
+            "vnp_IpAddr" => $vnp_IpAddr,
+            "vnp_Locale" => $vnp_Locale,
+            "vnp_OrderInfo" => $vnp_OrderInfo,
+            "vnp_ReturnUrl" => route('vnpayReturn'),
+            "vnp_TxnRef" => $vnp_TxnRef,
+        );
+        if (isset($vnp_BankCode) && $vnp_BankCode != "") {
+            $inputData['vnp_BankCode'] = $vnp_BankCode;
+        }
+        ksort($inputData);
+        $query = "";
+        $i = 0;
+        $hashdata = "";
+        foreach ($inputData as $key => $value) {
+            if ($i == 1) {
+                $hashdata .= '&' . $key . "=" . $value;
+            } else {
+                $hashdata .= $key . "=" . $value;
+                $i = 1;
+            }
+            $query .= urlencode($key) . "=" . urlencode($value) . '&';
+        }
+        $vnp_Url = env('VNP_URL') . "?" . $query;
+        if (env('VNP_HASHSECRECT')) {
+            // $vnpSecureHash = md5($vnp_HashSecret . $hashdata);
+            $vnpSecureHash = hash('sha256', env('VNP_HASHSECRECT') .
+                $hashdata);
+            $vnp_Url .= 'vnp_SecureHashType=SHA256&vnp_SecureHash=' .
+                $vnpSecureHash;
+        }
+        //dd($vnp_Url);
+
+        return redirect($vnp_Url);
+    }
+
+    public function vnpayReturn(Request $request)
+    {
+
+        if ($request->vnp_ResponseCode == '00') {
+            $cart = Session::get('cart');
+
+            //lay du lieu vnpay tra ve
+            $vnpay_Data = $request->all();
+
+            //insert du lieu vao bang payments
+
+            // ........(xong bước 9 thì quay lại hoàn chỉnh code này để lưu dl thanh
+            //toán vào bảng payments.
+
+            //truyen inputData vao trang vnpay_return
+            return view('vnpay_return', compact('vnpay_Data'));
+        }
+    }
+    // Email
+    public function getInputEmail(Request $req)
+    {
+        return view("emails/input-email");
+    } //hết getInputEmail
+
+    // public function postInputEmail(Request $req)
+    // {
+    //     $email = $req->txtEmail;
+    //     //validate
+
+    //     // kiểm tra có user có email như vậy không
+    //     $user = User::where('email', $email)->get();
+    //     //dd($user);
+    //     if ($user->count() != 0) {
+    //         //gửi mật khẩu reset tới email
+    //         $sentData = [
+    //             'title' => 'Mật khẩu mới của bạn là:',
+    //             'body' => '123456'
+    //         ];
+    //         \Mail::to($email)->send(new \App\Mail\SendMail($sentData));
+    //         // Session::flash('message', 'Send email successfully!');
+    //         echo '<script>alert("Send email successfully!");window.location.assign("/");</script>';
+    //     } else {
+    //         // return redirect()->route('getInputEmail')->with('message', 'Your email is not right');
+    //         echo '<script>alert("Your email is not right!");window.location.assign("/input-email");</script>';
+    //     }
+    // } //hết postInputEmail
+
+    public function postInputEmail(Request $req){
+
+        $email=$req->txtEmail;
+        //validate
+
+        // kiểm tra có user có email như vậy không
+        $user=User::where('email',$email)->get();
+        $password=rand(1000000,999999999);
+        //dd($user);
+        if($user->count()!=0){
+            //gửi mật khẩu reset tới email
+            $sentData = [
+                'hello' => 'Chào bạn,',
+                'hello1' => 'Bạn vừa yêu cầu nhận lại mật khẩu.',
+                'title' => 'Mật khẩu mới của bạn là:',
+                'body' => $password,
+                'sign'=> 'Sincerely,',
+                'sign1'=>'Thanh Tú',
+                'sign2'=>'---',
+                'sign3'=>' Nguyễn Thanh Tú ',
+                'sign4'=>'F𝑟𝑒𝑠ℎ𝑚𝑎𝑛 𝑎𝑡 Đà Nẵng 𝑣𝑜𝑐𝑎𝑡𝑖𝑜𝑛𝑎𝑙 𝑐𝑜𝑙𝑙𝑒𝑔𝑒',
+                'sign5'=>'🆂🆃🆄🅳🅴🅽🆃 | Non-governmental organization PNV',
+                'sign6'=>'( +84) 392 328 539',
+            ];
+            \Mail::to($email)->send(new \App\Mail\SendMail($sentData));
+            Session::flash('message', 'Send email successfully!');
+            User::where('email',$email)->update(['password'=> Hash::make($password)]);
+            echo '<script>alert("Email sent successfully! Please check your email.");window.location.assign("/");</script>'; //về lại trang đăng nhập của khách
+
+        }
+        else {
+            echo '<script>alert("Your email is not right!");window.location.assign("/input-email");</script>';
+        }
+    }//hết postInputEmail
 }

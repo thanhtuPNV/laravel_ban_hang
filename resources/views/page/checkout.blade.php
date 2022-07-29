@@ -162,6 +162,10 @@
 
                         </li>
 
+                        <li class="payment_method_cheque"><input id="payment_method_cheque" type="radio" class="input-radio" name="payment_method" value="VNPAY" data-order_button_text="">
+                           <label for="payment_method_cheque">Thanh toán online</label>
+                        </li>
+
                      </ul>
 
                   </div>

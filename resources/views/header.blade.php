@@ -11,6 +11,7 @@
                 <ul class="top-details menu-beta l-inline">
                 @if(Session::has('user'))
                 <li><a href="logout"><i class="fa fa-user"></i>{{Session('user')->full_name}}</a></li>
+                <li><a href="input-email">SetPassword</li>
                 @else
                 <li><a href="/register">Đăng kí</a></li>
                 <li><a href="login">Đăng nhập</a></li>
@@ -23,7 +24,7 @@
         <div class="header-body">
             <div class="container beta-relative">
             <div class="pull-left">
-                <a href="trangchu" id="logo"><img src="source/assets/dest/images/logo-cake.png" width="200px" alt=""></a>
+                <a href="" id="logo"><img src="source/assets/dest/images/logo-cake.png" width="200px" alt=""></a>
             </div>
             <div class="pull-right beta-components space-left ov">
                 <div class="space10">&nbsp;</div>
@@ -145,7 +146,7 @@
                 <li><a href="/type/{{$loai->id}}">{{$loai->name}}</a></li>
                 @endforeach
             </ul>
-            <li><a href="/showadmin">Admin</a></li>
+            <li><a href="/admin/slides">Admin</a></li>
             </li>
             <li><a href="/about">Giới thiệu</a></li>
             <li><a href="/contact">Liên hệ</a></li>
